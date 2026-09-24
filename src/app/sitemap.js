@@ -1,7 +1,7 @@
-﻿import { readCollection } from "@/lib/db";
+import { readCollection } from "@/lib/db";
 
 export default async function sitemap() {
-  const baseUrl = "https://marktech.ke";
+  const baseUrl = "https://marktech-portfolio.vercel.app";
   const projects = readCollection("projects", []);
 
   const staticRoutes = ["", "/about", "/projects", "/contact", "/privacy", "/terms"].map((route) => ({
