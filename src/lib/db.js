@@ -1,66 +1,88 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
+import { Redis } from "@upstash/redis";
 
-const DATA_DIR = path.join(process.cwd(), "data", "store");
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+const redis = redisUrl && redisToken
+  ? new Redis({ url: redisUrl, token: redisToken })
+  : null;
 
-function getFilePath(collection) {
-  return path.join(DATA_DIR, `${collection}.json`);
-}
+const storeDir = path.join(process.cwd(), "data", "store");
 
-export function readCollection(collection, fallback = []) {
-  const file = getFilePath(collection);
-  if (!fs.existsSync(file)) {
-    fs.writeFileSync(file, JSON.stringify(fallback, null, 2), "utf8");
-    return fallback;
-  }
+function cleanJsonParse(raw, fallback) {
   try {
-    const raw = fs.readFileSync(file, "utf8");
-    return JSON.parse(raw) || fallback;
+    const clean = raw.replace(/^\uFEFF/, "");
+    return JSON.parse(clean);
   } catch (err) {
-    console.error(`Error reading collection ${collection}:`, err);
+    console.error("[JSON-PARSE-ERR]:", err);
     return fallback;
   }
 }
 
-export function writeCollection(collection, data) {
-  const file = getFilePath(collection);
+function readLocalStore(collectionName, fallback = []) {
   try {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
+    const filePath = path.join(storeDir, `${collectionName}.json`);
+    if (!fs.existsSync(filePath)) {
+      return fallback;
+    }
+    const raw = fs.readFileSync(filePath, "utf-8");
+    return cleanJsonParse(raw, fallback);
+  } catch (err) {
+    console.error(`[DB-LOCAL-READ-ERR] ${collectionName}:`, err);
+    return fallback;
+  }
+}
+
+function writeLocalStore(collectionName, data) {
+  try {
+    if (!fs.existsSync(storeDir)) {
+      fs.mkdirSync(storeDir, { recursive: true });
+    }
+    const filePath = path.join(storeDir, `${collectionName}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
     return true;
   } catch (err) {
-    console.error(`Error writing collection ${collection}:`, err);
     return false;
   }
 }
 
-export function insertItem(collection, item, fallback = []) {
-  const items = readCollection(collection, fallback);
-  const newItem = {
-    id: item.id || Date.now().toString(),
-    created_at: new Date().toISOString(),
-    ...item,
-  };
-  items.unshift(newItem);
-  writeCollection(collection, items);
-  return newItem;
+export async function getCollection(collectionName, fallback = []) {
+  if (redis) {
+    try {
+      const data = await redis.get(collectionName);
+      if (data !== null && data !== undefined) {
+        return typeof data === "string" ? cleanJsonParse(data, fallback) : data;
+      }
+    } catch (err) {
+      console.warn(`[UPSTASH-GET-FALLBACK] ${collectionName}:`, err.message);
+    }
+  }
+  return readLocalStore(collectionName, fallback);
 }
 
-export function updateItem(collection, id, updates) {
-  const items = readCollection(collection);
-  const idx = items.findIndex((i) => i.id === id);
-  if (idx === -1) return null;
-  items[idx] = { ...items[idx], ...updates, updated_at: new Date().toISOString() };
-  writeCollection(collection, items);
-  return items[idx];
-}
-
-export function deleteItem(collection, id) {
-  const items = readCollection(collection);
-  const filtered = items.filter((i) => i.id !== id);
-  writeCollection(collection, filtered);
+export async function setCollection(collectionName, data) {
+  if (redis) {
+    try {
+      await redis.set(collectionName, JSON.stringify(data));
+    } catch (err) {
+      console.error(`[UPSTASH-SET-ERR] ${collectionName}:`, err);
+    }
+  }
+  writeLocalStore(collectionName, data);
   return true;
+}
+
+export function readCollection(collectionName, fallback = []) {
+  return readLocalStore(collectionName, fallback);
+}
+
+export function writeCollection(collectionName, data) {
+  if (redis) {
+    redis.set(collectionName, JSON.stringify(data)).catch((err) => {
+      console.error(`[UPSTASH-BG-WRITE-ERR] ${collectionName}:`, err);
+    });
+  }
+  return writeLocalStore(collectionName, data);
 }
