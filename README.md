@@ -1,5 +1,3 @@
-$ReadmePath = "$pwd\README.md"
-$ReadmeContent = @'
 # MARK-TECH — Systems Engineering & Healthcare Informatics
 
 > Production portfolio, engineering dossier, and administrative operations management console of **Oduor Mark**. Specializing in enterprise full-stack web platforms, clinical healthcare informatics (MarkCare HMS Core), and resilient serverless architectures.
