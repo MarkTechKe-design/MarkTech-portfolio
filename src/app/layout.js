@@ -119,12 +119,7 @@ const jsonLd = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} dark`}>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
+      
       <body className="antialiased bg-[#080808] text-white selection:bg-[#ff6b1a] selection:text-black">
         <PublicShell>
           {children}
