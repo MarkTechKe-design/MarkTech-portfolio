@@ -86,3 +86,31 @@ export function writeCollection(collectionName, data) {
   }
   return writeLocalStore(collectionName, data);
 }
+
+export async function insertItem(collectionName, item) {
+  const list = await getCollection(collectionName, []);
+  const newItem = {
+    id: item.id || Date.now().toString(),
+    ...item,
+    created_at: item.created_at || new Date().toISOString()
+  };
+  list.unshift(newItem);
+  await setCollection(collectionName, list);
+  return newItem;
+}
+
+export async function updateItem(collectionName, id, updates) {
+  const list = await getCollection(collectionName, []);
+  const index = list.findIndex((i) => String(i.id) === String(id));
+  if (index === -1) return null;
+  list[index] = { ...list[index], ...updates, updated_at: new Date().toISOString() };
+  await setCollection(collectionName, list);
+  return list[index];
+}
+
+export async function deleteItem(collectionName, id) {
+  const list = await getCollection(collectionName, []);
+  const filtered = list.filter((i) => String(i.id) !== String(id));
+  await setCollection(collectionName, filtered);
+  return true;
+}
