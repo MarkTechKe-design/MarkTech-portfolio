@@ -1,197 +1,125 @@
-"use client";
-import { useRef, useState, useEffect } from "react";
+﻿"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SECTION } from "@/app/work/content";
-
-gsap.registerPlugin(ScrollTrigger);
-
-const CATEGORIES = [
-  {
-    num: "01",
-    label: "Website",
-    title: "Web Design & Development",
-    description:
-      "High-performance websites, Shopify stores, and Next.js web apps — pixel-perfect and built for conversion.",
-    icon: (
-      <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8 opacity-20 group-hover:opacity-60 transition-opacity duration-500">
-        <rect x="4" y="8" width="32" height="24" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M4 14h32" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="9" cy="11" r="1.2" fill="currentColor"/>
-        <circle cx="13" cy="11" r="1.2" fill="currentColor"/>
-        <circle cx="17" cy="11" r="1.2" fill="currentColor"/>
-      </svg>
-    ),
-    href: "/projects?cat=website",
-  },
-  {
-    num: "02",
-    label: "Photo / Poster Design",
-    title: "Visual & Graphic Design",
-    description:
-      "Brand identities, social media creatives, posters, and photo edits that stop the scroll and tell the story.",
-    icon: (
-      <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8 opacity-20 group-hover:opacity-60 transition-opacity duration-500">
-        <rect x="5" y="5" width="30" height="30" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="14" cy="15" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M5 28l9-8 6 6 5-5 10 9" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-      </svg>
-    ),
-    href: "/projects?cat=design",
-  },
-  {
-    num: "03",
-    label: "Video",
-    title: "Video & Motion Editing",
-    description:
-      "Cinematic reels, brand films, short-form content, and motion graphics that captivate and convert audiences.",
-    icon: (
-      <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8 opacity-20 group-hover:opacity-60 transition-opacity duration-500">
-        <rect x="4" y="9" width="24" height="22" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M28 15l8-5v20l-8-5V15z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M13 16l7 4-7 4V16z" fill="currentColor" opacity="0.5"/>
-      </svg>
-    ),
-    href: "/projects?cat=video",
-  },
-];
+import { PRODUCTS } from "@/data/projects";
 
 export default function Work() {
-  const ref = useRef(null);
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.utils.toArray(".work-item").forEach((item) => {
-        gsap.from(item, {
-          scrollTrigger: { trigger: item, start: "top 90%", toggleActions: "play none none none" },
-          y: 40,
-          opacity: 0,
-          duration: 0.8,
-          ease: "power3.out",
-        });
+    fetch("/api/projects")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          setProjects(data);
+        } else {
+          setProjects(PRODUCTS);
+        }
+      })
+      .catch(() => {
+        setProjects(PRODUCTS);
       });
-
-      gsap.to(ref.current, {
-        scrollTrigger: {
-          trigger: ref.current,
-          start: "bottom 80%",
-          end: "bottom 20%",
-          scrub: 1,
-        },
-        opacity: 0,
-        y: -50,
-      });
-    }, ref);
-    return () => ctx.revert();
   }, []);
 
   return (
     <section
-      ref={ref}
       id="work-section"
-      className="relative w-full min-h-screen px-10 md:px-20 pt-64 pb-72 flex flex-col justify-center"
+      className="relative w-full bg-[#080808] text-white px-6 md:px-16 py-20 md:py-28 border-t border-white/5"
     >
-      <div className="max-w-4xl w-full">
-
-        {/* Header and Filters */}
-        <div className="mb-14 md:mb-20">
-          <p className="font-sans text-[10px] text-[#ff6b1a] tracking-[0.5em] uppercase mb-4 font-medium">
-            {SECTION.label}
-          </p>
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+      <div className="max-w-7xl mx-auto w-full">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-14">
+          <div className="max-w-2xl">
+            <p className="text-[11px] text-[#ff6b1a] tracking-[0.45em] uppercase font-mono font-bold mb-3">
+              Selected Architecture & Platforms
+            </p>
             <h2
-              className="font-sans font-black tracking-tighter text-white leading-none"
-              style={{ fontSize: "clamp(3rem, 8vw, 6rem)" }}
+              className="font-black text-white tracking-tighter leading-[0.9] mb-4"
+              style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}
             >
-              {SECTION.heading}
+              Engineering<br />
+              <span className="text-white/25">Platforms.</span>
             </h2>
+            <p className="text-sm md:text-base text-white/60 font-light leading-relaxed">
+              Production systems designed for deterministic uptime, multi-tenant clinical workflows,
+              institutional governance, and forensic software verification.
+            </p>
+          </div>
 
-            {/* Category pills — decorative only */}
-            <div className="flex flex-wrap gap-2 lg:pb-2">
-              {["Website", "Photo / Poster Design", "Video"].map((cat) => (
-                <Link
-                  key={cat}
-                  href={`/projects${cat !== "All" ? `?cat=${cat.toLowerCase().split(" ")[0]}` : ""}`}
-                  className="px-4 py-2 rounded-full text-[10px] md:text-xs font-medium tracking-widest uppercase transition-all duration-300 bg-transparent text-white/40 border border-white/10 hover:text-white hover:border-white/30"
-                >
-                  {cat}
-                </Link>
-              ))}
-            </div>
+          <div className="flex-shrink-0">
+            <Link
+              href="/projects"
+              className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full bg-white/5 border border-white/10 hover:border-[#ff6b1a]/50 text-white text-xs uppercase tracking-[0.2em] font-bold hover:bg-[#ff6b1a] hover:text-black transition-all duration-300"
+            >
+              View Full Catalog ({projects.length}+ Systems)
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </Link>
           </div>
         </div>
 
-        {/* 3 Category Cards */}
-        <div className="flex flex-col">
-          {CATEGORIES.map((cat, i) => (
-            <Link
-              key={cat.num}
-              href={cat.href}
-              className="work-item group relative flex items-start gap-8 py-10 md:py-14 border-b border-white/8 hover:border-white/20 transition-all duration-500"
-            >
-              {/* Left orange accent bar */}
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-[#ff6b1a] origin-top scale-y-0 group-hover:scale-y-100 transition-transform duration-500 ease-out" />
+        {/* Product Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          {projects.slice(0, 3).map((product, idx) => {
+            const tagsList = product.tech 
+              ? product.tech.split(",").map(t => t.trim()) 
+              : (Array.isArray(product.technologies) ? product.technologies.map(t => t.name) : (product.tags || []));
 
-              {/* Number */}
-              <div className="pl-3 shrink-0 w-8 pt-1">
-                <span className="font-mono text-[10px] text-white/20 group-hover:text-[#ff6b1a] tracking-widest transition-colors duration-300">
-                  {cat.num}
-                </span>
+            return (
+              <div
+                key={product.id || idx}
+                className="group relative bg-white/[0.02] border border-white/5 hover:border-[#ff6b1a]/40 rounded-3xl p-7 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.04]"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-[10px] text-[#ff6b1a] tracking-[0.25em] uppercase font-bold px-3 py-1 bg-[#ff6b1a]/10 rounded-full font-mono">
+                      {product.category}
+                    </span>
+                    <span className="text-white/30 text-xs font-mono font-bold">0{idx + 1}</span>
+                  </div>
+
+                  <h3 className="text-2xl font-black text-white tracking-tight mb-3 group-hover:text-[#ff6b1a] transition-colors">
+                    {product.title}
+                  </h3>
+
+                  <p className="text-white/60 text-xs md:text-sm font-light leading-relaxed mb-6">
+                    {product.description || product.tagline}
+                  </p>
+
+                  {/* Tech Pills */}
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {tagsList.slice(0, 4).map((techName) => (
+                      <span
+                        key={techName}
+                        className="text-[10px] text-white/70 bg-white/5 px-2.5 py-1 rounded-md border border-white/5 font-mono"
+                      >
+                        {techName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                  <a
+                    href={product.link || `https://github.com/MarkTechKe-design`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#ff6b1a] font-bold group-hover:translate-x-1 transition-transform"
+                  >
+                    Explore Architecture
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </a>
+                  <span className="text-[10px] text-white/30 uppercase font-mono tracking-widest">
+                    {product.year || "Production"}
+                  </span>
+                </div>
               </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 translate-x-0 group-hover:translate-x-1.5 transition-transform duration-500 ease-out">
-                <p className="font-sans text-[10px] text-white/30 group-hover:text-[#ff6b1a]/70 tracking-[0.4em] uppercase font-light mb-2 transition-colors duration-300">
-                  {cat.label}
-                </p>
-                <h3 className="font-sans text-xl md:text-2xl font-black text-white tracking-tighter mb-3 group-hover:text-white transition-colors duration-300">
-                  {cat.title}
-                </h3>
-                <p className="font-sans text-sm text-white/35 group-hover:text-white/60 font-light leading-relaxed max-w-2xl transition-colors duration-300">
-                  {cat.description}
-                </p>
-
-                <span className="mt-4 inline-flex items-center gap-1.5 text-[10px] text-white/20 group-hover:text-white/55 tracking-widest uppercase transition-colors duration-200">
-                  View Projects
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 8L8 2M8 2H4M8 2v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                  </svg>
-                </span>
-              </div>
-
-              {/* Icon */}
-              <div className="hidden md:flex shrink-0 items-center pt-2 text-white">
-                {cat.icon}
-              </div>
-            </Link>
-          ))}
-
-          {/* 4th item — View Full Projects CTA */}
-          <Link
-            href="/projects"
-            className="work-item group relative flex items-center gap-8 py-10 md:py-14 border-b border-white/8 hover:border-white/20 transition-all duration-500"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-px bg-[#ff6b1a] origin-top scale-y-0 group-hover:scale-y-100 transition-transform duration-500 ease-out" />
-            <div className="pl-3 shrink-0 w-8">
-              <span className="font-mono text-[10px] text-white/20 group-hover:text-[#ff6b1a] tracking-widest transition-colors duration-300">→</span>
-            </div>
-            <div className="flex-1 translate-x-0 group-hover:translate-x-1.5 transition-transform duration-500 ease-out">
-              <p className="font-sans text-[10px] text-white/30 group-hover:text-[#ff6b1a]/70 tracking-[0.4em] uppercase font-light mb-2 transition-colors duration-300">
-                Full Portfolio
-              </p>
-              <h3 className="font-sans text-xl md:text-2xl font-black text-white tracking-tighter group-hover:text-white transition-colors duration-300">
-                View All Projects
-              </h3>
-            </div>
-            <div className="hidden md:flex items-center gap-2 text-white/20 group-hover:text-[#ff6b1a] transition-colors duration-300 pr-2">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path d="M6 14h16M16 8l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </Link>
+            );
+          })}
         </div>
-
       </div>
     </section>
   );

@@ -1,166 +1,255 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+﻿"use client";
+import { useEffect, useState } from "react";
 
-const EMPTY_FORM = { author: '', role: '', company: '', content: '', rating: 5, avatar: '' };
+function StarRating({ rating = 5 }) {
+  return (
+    <div className="flex items-center gap-1 text-[#ff6b1a]">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg
+          key={i}
+          className={`w-3.5 h-3.5 ${i < rating ? "fill-current" : "text-white/10 fill-current"}`}
+          viewBox="0 0 20 20"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
 
 export default function ReviewsAdmin() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const router = useRouter();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [form, setForm] = useState({ author: "", role: "", company: "", content: "", rating: 5 });
 
-  const load = () => {
-    fetch('/api/reviews?all=true')
-      .then(async (r) => {
-        if (r.status === 401) { router.push('/admin/login'); return null; }
-        if (!r.ok) return null;
-        try { return await r.json(); } catch { return null; }
-      })
-      .then((data) => { 
-        setReviews(data || []); 
-        setLoading(false); 
-      });
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch("/api/reviews");
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error("Error loading reviews:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(load, [router]);
+  useEffect(() => {
+    fetchReviews();
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    await fetch('/api/reviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    setForm(EMPTY_FORM);
-    setShowForm(false);
-    load();
-    setSaving(false);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setShowAddModal(false);
+        setForm({ author: "", role: "", company: "", content: "", rating: 5 });
+        fetchReviews();
+      }
+    } catch (err) {
+      console.error("Error creating review:", err);
+    }
   };
 
-  const toggle = async (id, approved) => {
-    await fetch(`/api/reviews/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ approved: !approved }),
-    });
-    load();
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this endorsement?")) return;
+    try {
+      const res = await fetch(`/api/reviews?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setReviews(reviews.filter((r) => r.id !== id));
+      }
+    } catch (err) {
+      console.error("Error deleting review:", err);
+    }
   };
 
-  const remove = async (id) => {
-    if (!confirm('Delete this review?')) return;
-    await fetch(`/api/reviews/${id}`, { method: 'DELETE' });
-    load();
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "Recent Verification";
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? "Recent Verification" : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
-
-  const field = (key) => ({
-    value: form[key],
-    onChange: (e) => setForm({ ...form, [key]: e.target.value }),
-    className:
-      'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#ff6b1a]/50 transition-colors',
-  });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="space-y-8 font-sans">
+      {/* Title & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-2xl font-bold mb-1">Reviews</h1>
-          <p className="text-white/30 text-sm">{reviews.length} review{reviews.length !== 1 ? 's' : ''} total</p>
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight font-mono">
+            Client & Peer Endorsements
+          </h1>
+          <p className="text-xs text-white/40 font-mono mt-1">
+            {reviews.length} total endorsements active on live portfolio
+          </p>
         </div>
+
         <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-[#ff6b1a] text-black font-bold px-5 py-2.5 rounded-xl text-sm uppercase tracking-widest hover:bg-[#ff8c42] transition-colors"
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="px-5 py-2.5 rounded-xl bg-[#ff6b1a] hover:bg-[#ff8c42] text-black text-xs font-bold font-mono uppercase tracking-wider transition-colors inline-flex items-center gap-2 w-fit"
         >
-          {showForm ? 'Cancel' : '+ Add Review'}
+          <span>+</span> Add New Review
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="bg-[#111] border border-white/5 rounded-2xl p-6 mb-8">
-          <h2 className="text-white font-semibold mb-5">New Review</h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <input required placeholder="Author name *" {...field('author')} />
-            <input placeholder="Role / Title" {...field('role')} />
-            <input placeholder="Company" {...field('company')} />
-            <select
-              value={form.rating}
-              onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#ff6b1a]/50 transition-colors"
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n} style={{ background: '#111' }}>{n} ★</option>
-              ))}
-            </select>
-          </div>
-          <textarea
-            required
-            placeholder="Review content *"
-            rows={4}
-            {...field('content')}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#ff6b1a]/50 transition-colors resize-none mb-4"
-          />
-          <input placeholder="Avatar URL (optional)" {...field('avatar')} className="mb-4 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-white/25 focus:outline-none focus:border-[#ff6b1a]/50 transition-colors" />
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-[#ff6b1a] text-black font-bold px-6 py-2.5 rounded-xl text-sm uppercase tracking-widest hover:bg-[#ff8c42] transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Saving…' : 'Save Review'}
-          </button>
-        </form>
-      )}
-
+      {/* Reviews List */}
       {loading ? (
-        <div className="text-white/20 text-sm">Loading reviews…</div>
+        <div className="py-20 text-center text-xs font-mono text-white/40">
+          Loading endorsements...
+        </div>
       ) : reviews.length === 0 ? (
-        <div className="text-center py-20 text-white/15">No reviews yet. Add your first one!</div>
+        <div className="py-20 text-center text-xs font-mono text-white/30 border border-dashed border-white/10 rounded-2xl">
+          No endorsements registered yet.
+        </div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((r) => (
-            <div key={r._id} className="bg-[#111] border border-white/5 rounded-2xl p-6">
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="flex items-center gap-3">
-                  {r.avatar && (
-                    <img src={r.avatar} alt={r.author} className="w-10 h-10 rounded-full object-cover opacity-80" />
-                  )}
-                  <div>
-                    <p className="text-white font-medium text-sm">{r.author}</p>
-                    {(r.role || r.company) && (
-                      <p className="text-white/35 text-xs mt-0.5">
-                        {[r.role, r.company].filter(Boolean).join(' · ')}
-                      </p>
-                    )}
+          {reviews.map((r, idx) => (
+            <div
+              key={r.id || idx}
+              className="bg-[#111] border border-white/5 hover:border-white/10 rounded-2xl p-6 transition-colors space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-base font-bold text-white tracking-tight">
+                      {r.author || r.name}
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Live
+                    </span>
                   </div>
+                  <p className="text-xs text-white/50 font-mono">
+                    {r.role} <span className="text-white/20 mx-1.5">•</span> <span className="text-[#ff6b1a]">{r.company}</span>
+                  </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[#ff6b1a] text-xs">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+
+                <div className="flex items-center gap-4">
+                  <StarRating rating={r.rating || 5} />
                   <button
-                    onClick={() => toggle(r._id, r.approved)}
-                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                      r.approved
-                        ? 'border-green-500/30 text-green-400 hover:border-red-400/30 hover:text-red-400'
-                        : 'border-white/10 text-white/30 hover:border-green-500/30 hover:text-green-400'
-                    }`}
-                  >
-                    {r.approved ? 'Published' : 'Hidden'}
-                  </button>
-                  <button
-                    onClick={() => remove(r._id)}
-                    className="text-xs text-white/20 hover:text-red-400 transition-colors px-2 py-1"
+                    type="button"
+                    onClick={() => handleDelete(r.id)}
+                    className="text-xs font-mono text-red-400/60 hover:text-red-400 transition-colors"
                   >
                     Delete
                   </button>
                 </div>
               </div>
-              <p className="text-white/55 text-sm leading-relaxed">{r.content}</p>
-              <p className="text-white/20 text-xs mt-3">
-                {new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+
+              <p className="text-sm text-white/70 font-light leading-relaxed italic">
+                &ldquo;{r.content}&rdquo;
               </p>
+
+              <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/30">
+                <span>{formatDate(r.created_at)}</span>
+                <span>ID: {r.id}</span>
+              </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal: Add New Endorsement */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#121212] border border-white/10 rounded-3xl p-6 md:p-8 max-w-lg w-full space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white font-mono">Add Client Endorsement</h2>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="text-white/40 hover:text-white font-mono text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreate} className="space-y-4 text-xs font-mono">
+              <div className="space-y-1">
+                <label className="text-white/50 uppercase tracking-wider text-[10px]">Author / Signatory</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Kennedy Onjiro"
+                  value={form.author}
+                  onChange={(e) => setForm({ ...form, author: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[#ff6b1a]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-white/50 uppercase tracking-wider text-[10px]">Role / Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Managing Director"
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[#ff6b1a]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-white/50 uppercase tracking-wider text-[10px]">Company / Organization</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Enterprise Client"
+                    value={form.company}
+                    onChange={(e) => setForm({ ...form, company: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[#ff6b1a]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-white/50 uppercase tracking-wider text-[10px]">Endorsement Feedback</label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Write the recommendation or feedback statement..."
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[#ff6b1a] resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-white/50 uppercase tracking-wider text-[10px]">Rating (1 to 5 Stars)</label>
+                <select
+                  value={form.rating}
+                  onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[#ff6b1a]"
+                >
+                  <option value={5} className="bg-black">5 Stars (Exceptional)</option>
+                  <option value={4} className="bg-black">4 Stars (Great)</option>
+                  <option value={3} className="bg-black">3 Stars (Standard)</option>
+                </select>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="w-1/2 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 py-3 rounded-xl bg-[#ff6b1a] text-black font-bold uppercase tracking-wider hover:bg-[#ff8c42]"
+                >
+                  Save & Publish
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

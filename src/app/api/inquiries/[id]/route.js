@@ -1,30 +1,19 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
-import { supabase } from '@/lib/supabase';
+﻿import { NextResponse } from "next/server";
+import { readCollection, writeCollection } from "@/lib/db";
 
-async function isAdmin() {
-  const store = await cookies();
-  const token = store.get('admin_token')?.value;
-  if (!token) return false;
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    await jwtVerify(token, secret);
-    return true;
-  } catch {
-    return false;
-  }
+export async function DELETE(request, { params }) {
+  const { id } = await params;
+  const items = readCollection("inquiries", []);
+  const filtered = items.filter((item) => String(item.id) !== String(id));
+  writeCollection("inquiries", filtered);
+  return NextResponse.json({ success: true });
 }
 
 export async function PATCH(request, { params }) {
-  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await params;
   const body = await request.json();
-  const { data: inquiry } = await supabase.from('inquiries').update(body).eq('id', params.id).select().single();
-  return NextResponse.json(inquiry);
-}
-
-export async function DELETE(_, { params }) {
-  if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  await supabase.from('inquiries').delete().eq('id', params.id);
+  const items = readCollection("inquiries", []);
+  const updated = items.map((item) => (String(item.id) === String(id) ? { ...item, ...body } : item));
+  writeCollection("inquiries", updated);
   return NextResponse.json({ success: true });
 }

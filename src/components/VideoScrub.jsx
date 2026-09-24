@@ -43,7 +43,7 @@ export default function VideoScrub() {
     const calcVideoEnd = () => {
       const contact = document.getElementById("contact-section");
       if (contact) {
-        // End video at contact section midpoint — uses full Work→Contact gap for smooth playback
+        // End video at contact section midpoint Ã¢â‚¬â€ uses full WorkÃ¢â€ â€™Contact gap for smooth playback
         videoEndScroll = Math.max(1, contact.offsetTop + contact.offsetHeight * 0.5 - window.innerHeight * 0.5);
       } else {
         videoEndScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -121,7 +121,7 @@ export default function VideoScrub() {
       const atStart = tgt <= EDGE;
       const atEnd   = progress >= 1;
 
-      // ── PAST CONTACT: hold silently at current frame, no seek
+      // Ã¢â€â‚¬Ã¢â€â‚¬ PAST CONTACT: hold silently at current frame, no seek
       if (atEnd) {
         if (!fwd.paused) fwd.pause();
         if (!rev.paused) rev.pause();
@@ -130,7 +130,7 @@ export default function VideoScrub() {
         return;
       }
 
-      // ── FROZEN (near start or low velocity)
+      // Ã¢â€â‚¬Ã¢â€â‚¬ FROZEN (near start or low velocity)
       if (absVel < FREEZE_VEL || atStart) {
         if (!fwd.paused) fwd.pause();
         if (!rev.paused) rev.pause();
@@ -143,7 +143,7 @@ export default function VideoScrub() {
       }
       frozenSnap = null;
 
-      // ── SLOW SCRUB
+      // Ã¢â€â‚¬Ã¢â€â‚¬ SLOW SCRUB
       if (absVel < PLAY_VEL) {
         if (!fwd.paused) fwd.pause();
         if (!rev.paused) rev.pause();
@@ -159,7 +159,7 @@ export default function VideoScrub() {
         return;
       }
 
-      // ── FAST PLAY
+      // Ã¢â€â‚¬Ã¢â€â‚¬ FAST PLAY
       const invM = duration / videoEndScroll;
       if (vel > 0) {
         const rate = Math.min(8, Math.max(0.25, vel * invM));
@@ -217,7 +217,7 @@ export default function VideoScrub() {
     { id: 'contact-section', src: '/photo/contact.webp' },
   ];
 
-  // Mobile scroll-driven state — updated directly via RAF, no React re-renders
+  // Mobile scroll-driven state Ã¢â‚¬â€ updated directly via RAF, no React re-renders
   const mobileLayersRef = useRef([]); // refs to the bg divs, updated imperatively
 
   useEffect(() => {
@@ -256,7 +256,7 @@ export default function VideoScrub() {
     const frame = () => {
       rafId = requestAnimationFrame(frame);
       const idx  = getIndex();
-      const prog = getProgress(idx); // 0→1 as next section approaches
+      const prog = getProgress(idx); // 0Ã¢â€ â€™1 as next section approaches
 
       if (idx === lastIdx && Math.abs(prog - lastProg) < 0.001) return;
       lastIdx  = idx;
@@ -305,11 +305,11 @@ export default function VideoScrub() {
     return () => cancelAnimationFrame(rafId);
   }, [isMobile, mounted]);
 
-  // Never render on server — eliminates SSR/client hydration mismatch
+  // Never render on server Ã¢â‚¬â€ eliminates SSR/client hydration mismatch
   if (!mounted) {
     // Return a static placeholder that matches the hero image for immediate LCP
     return (
-      <div className="fixed inset-0 z-0 bg-[#0a0a0a]">
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[#0a0a0a]">
         <div 
           className="absolute inset-0 w-full h-full opacity-60"
           style={{
@@ -328,10 +328,10 @@ export default function VideoScrub() {
   const cls = "absolute inset-0 w-full h-full object-cover";
   const sty = { willChange: "transform", transform: "translateZ(0)" };
 
-  // Phone: scroll-driven parallax swipe — image moves WITH finger in real time
+  // Phone: scroll-driven parallax swipe Ã¢â‚¬â€ image moves WITH finger in real time
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-0 overflow-hidden bg-[#0a0a0a]">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#0a0a0a]">
         {SECTION_IMAGES.map((sec, i) => (
           <div
             key={sec.src}
@@ -360,7 +360,7 @@ export default function VideoScrub() {
 
   // Desktop: Full scroll-scrubbing video experience
   return (
-    <div className="fixed inset-0 z-0 bg-[#0a0a0a]">
+    <div className="fixed inset-0 z-0 pointer-events-none bg-[#0a0a0a]">
       <video ref={fwdRef} src="/videos/optimized.mp4" poster="/photo/hero.webp"
         className={cls} style={{ ...sty, opacity: 1 }}
         muted playsInline preload="metadata"

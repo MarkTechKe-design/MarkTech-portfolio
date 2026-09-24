@@ -1,0 +1,32 @@
+﻿[
+  {
+    "id": "rev-1",
+    "author": "Systems Operations Directorate",
+    "role": "Institutional ICT Administration",
+    "company": "Campus Partner",
+    "content": "Mark displayed exceptional attention to operational uptime and lab diagnostics. His structured approach to campus networking and user support kept faculty operations running smoothly.",
+    "rating": 5,
+    "visible": true,
+    "created_at": "2026-08-15T09:30:00.000Z"
+  },
+  {
+    "id": "rev-2",
+    "author": "Commercial Operations Lead",
+    "role": "Retail & E-Commerce Division",
+    "company": "Powerstar Supermarkets",
+    "content": "Oduor Mark combined web engineering with practical social marketing. The staff attendance workflows and KPI tracking tools he architected brought immediate accountability to our daily operations.",
+    "rating": 5,
+    "visible": true,
+    "created_at": "2026-07-20T14:15:00.000Z"
+  },
+  {
+    "id": "rev-3",
+    "author": "Clinical Informatics Advisor",
+    "role": "Healthcare Systems Consultant",
+    "company": "HealthTech Kenya",
+    "content": "Finding someone who understands clinical triage and database normalization at the same time is rare. His work on MarkCare HMS demonstrates deep domain insight that off-the-shelf software misses.",
+    "rating": 5,
+    "visible": true,
+    "created_at": "2026-09-02T11:00:00.000Z"
+  }
+]

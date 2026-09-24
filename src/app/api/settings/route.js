@@ -1,38 +1,58 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
-import { supabase } from '@/lib/supabase';
+﻿import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
+import { readCollection, writeCollection } from "@/lib/db";
 
 async function isAdmin() {
   const store = await cookies();
-  const token = store.get('admin_token')?.value;
+  const token = store.get("admin_token")?.value;
   if (!token) return false;
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     await jwtVerify(token, secret);
     return true;
-  } catch { return false; }
-}
-
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const key = searchParams.get('key');
-  let query = supabase.from('settings').select('*');
-  if (key) query = query.eq('key', key).single();
-  const { data } = await query;
-  return NextResponse.json(data || null);
-}
-
-export async function PATCH(request) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch {
+    return false;
   }
-  const { key, value } = await request.json();
-  const { data, error } = await supabase
-    .from('settings')
-    .upsert({ key, value }, { onConflict: 'key' })
-    .select()
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+}
+
+const DEFAULT_SETTINGS = [
+  {
+    id: "portfolio_config",
+    availableForHire: true,
+    availabilityText: "Available for Q4 2026 Engagements",
+    contactEmail: "oduor.markochieng@gmail.com",
+    contactPhone: "+254718178521",
+    location: "Nairobi & Siaya, Kenya",
+    resumeUrl: "/resume.pdf",
+    profileImageUrl: "/photo/about.webp",
+    headlineTagline: "Let's build something cool.",
+    updated_at: new Date().toISOString()
+  }
+];
+
+export async function GET() {
+  const settings = readCollection("settings", DEFAULT_SETTINGS);
+  return NextResponse.json(settings[0] || DEFAULT_SETTINGS[0]);
+}
+
+export async function POST(request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const updates = await request.json();
+    const settings = readCollection("settings", DEFAULT_SETTINGS);
+    const updated = {
+      ...settings[0],
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    writeCollection("settings", [updated]);
+    return NextResponse.json(updated);
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
+  }
 }

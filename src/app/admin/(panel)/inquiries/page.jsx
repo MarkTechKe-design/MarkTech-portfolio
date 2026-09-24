@@ -105,7 +105,7 @@ export default function InquiriesAdmin() {
               onClick={() => setComposeTo(null)}
               className="absolute top-4 right-4 text-white/40 hover:text-white"
             >
-              ✕
+              âœ•
             </button>
             <h2 className="text-white font-bold mb-5">Send Email</h2>
             
@@ -162,7 +162,7 @@ export default function InquiriesAdmin() {
       )}
 
       {loading ? (
-        <div className="text-white/20 text-sm">Loading inquiries…</div>
+        <div className="text-white/20 text-sm">Loading inquiriesâ€¦</div>
       ) : inquiries.length === 0 ? (
         <div className="text-center py-20 text-white/15">No inquiries yet.</div>
       ) : (

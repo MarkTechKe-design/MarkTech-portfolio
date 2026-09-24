@@ -1,16 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ── Compiler optimisations ────────────────────────────────────────
+  // Compiler optimisations
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  // ── Experimental ─────────────────────────────────────────────────
-  experimental: {
-    optimizeCss: true,
-  },
-
-  // ── Image optimisation ────────────────────────────────────────────
+  // Image optimisation
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
@@ -20,24 +15,21 @@ const nextConfig = {
     ],
   },
 
-  // ── SEO, Cache & AI Crawler headers ──────────────────────────────
+  // SEO, Cache & AI Crawler headers
   async headers() {
     return [
       {
-        // Long-lived cache for videos
         source: "/videos/:path*",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
       {
-        // Long-lived cache for images/photos
         source: "/photo/:path*",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
-
       {
         source: "/llms.txt",
         headers: [
