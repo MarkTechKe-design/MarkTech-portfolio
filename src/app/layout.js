@@ -1,6 +1,7 @@
-﻿import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import PublicShell from "@/components/PublicShell";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -65,6 +66,7 @@ export default function RootLayout({ children }) {
         <PublicShell>
           {children}
         </PublicShell>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

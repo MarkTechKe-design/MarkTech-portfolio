@@ -1,4 +1,13 @@
-﻿/** @type {import('next').NextConfig} */
+import withSerwistInit from "@serwist/next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.js",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+  reloadOnOnline: true,
+});
+
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
@@ -89,4 +98,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);
