@@ -1,13 +1,11 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,10 +19,12 @@ export default function AdminLogin() {
         body: JSON.stringify({ password }),
       });
 
-      if (res.ok) {
-        router.push('/admin');
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        // Force a hard window redirect so the browser commits and sends the admin_token cookie
+        window.location.href = '/admin';
       } else {
-        const data = await res.json().catch(() => ({}));
         setError(data.error || 'Invalid password. Try again.');
         setLoading(false);
       }
