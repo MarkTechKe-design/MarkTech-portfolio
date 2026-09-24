@@ -1,11 +1,9 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Compiler optimisations
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  // Image optimisation
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
@@ -15,9 +13,33 @@ const nextConfig = {
     ],
   },
 
-  // SEO, Cache & AI Crawler headers
   async headers() {
     return [
+      // Global HTTP Security Headers
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+      // Admin Console Anti-Indexing Header
+      {
+        source: "/admin/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+        ],
+      },
+      // Cache & SEO Headers
       {
         source: "/videos/:path*",
         headers: [
@@ -56,7 +78,11 @@ const nextConfig = {
       {
         source: "/((?!api|_next|admin).*)",
         headers: [
-          { key: "X-Robots-Tag", value: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+          {
+            key: "X-Robots-Tag",
+            value:
+              "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+          },
         ],
       },
     ];

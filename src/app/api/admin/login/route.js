@@ -1,8 +1,26 @@
 ﻿import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
+import { loginLimiter, getClientIp } from '@/lib/ratelimit';
 
 export async function POST(request) {
   try {
+    const ip = getClientIp(request);
+
+    // Apply Rate Limiting if Upstash is connected
+    if (loginLimiter) {
+      const { success, reset } = await loginLimiter.limit(ip);
+      if (!success) {
+        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+        return NextResponse.json(
+          { error: `Too many login attempts. Try again in ${Math.ceil(retryAfter / 60)} minutes.` },
+          { 
+            status: 429,
+            headers: { 'Retry-After': String(retryAfter) }
+          }
+        );
+      }
+    }
+
     const { password } = await request.json();
     
     const configuredPassword = (process.env.ADMIN_PASSWORD || '').trim().replace(/^["']|["']$/g, '');
